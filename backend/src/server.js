@@ -15,8 +15,36 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN?.split(",") || "*" }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Izinkan request tanpa origin (seperti mobile app atau curl)
+    if (!origin) return callback(null, true);
+    
+    // Izinkan localhost, netlify.app, vercel.app secara dinamis
+    const isAllowedPattern = 
+      /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+      /\.netlify\.app$/.test(origin) ||
+      /\.vercel\.app$/.test(origin);
+      
+    if (isAllowedPattern) {
+      return callback(null, true);
+    }
+    
+    // Cek kecocokan dengan daftar CORS_ORIGIN
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes("*") || allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error("Blocked by CORS"), false);
+  },
+  credentials: true
+}));
+
 app.use(express.json({ limit: "2mb" }));
 app.use(morgan("dev"));
 
