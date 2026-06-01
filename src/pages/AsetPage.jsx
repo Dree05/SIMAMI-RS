@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Eye, Pencil, Trash2, QrCode } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, QrCode } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
+import ToastContainer from '../components/common/Toast';
+import { useToast } from '../hooks/useToast';
 import { asets, LOKASI, KATEGORI_ASET, STATUS_ASET, KONDISI_ASET } from '../data/dummy';
 import { FormInput, FormSelect, FormTextarea } from '../components/common/FormInput';
 
@@ -16,6 +18,7 @@ const emptyForm = {
 
 export default function AsetPage() {
   const navigate = useNavigate();
+  const { toasts, toast, removeToast } = useToast();
   const [data, setData] = useState(asets);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -43,15 +46,19 @@ export default function AsetPage() {
     if (modal === 'add') {
       const newId = `AST-${String(data.length + 1).padStart(3, '0')}`;
       setData(prev => [...prev, { ...form, id: newId, nilaiPengadaan: Number(form.nilaiPengadaan), terakhirDiperbarui: new Date().toISOString().split('T')[0] }]);
+      toast.success('Aset berhasil ditambahkan', `${form.nama} telah disimpan ke daftar aset.`);
     } else {
       setData(prev => prev.map(a => a.id === selected.id ? { ...selected, ...form, nilaiPengadaan: Number(form.nilaiPengadaan) } : a));
+      toast.success('Aset berhasil diperbarui', `Data ${form.nama} telah diperbarui.`);
     }
     setModal(null);
   };
 
   const handleDelete = () => {
+    const namaAset = selected?.nama;
     setData(prev => prev.filter(a => a.id !== selected.id));
     setModal(null);
+    toast.success('Aset berhasil dihapus', `${namaAset} telah dihapus dari daftar aset.`);
   };
 
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -191,6 +198,8 @@ export default function AsetPage() {
       >
         <p className="text-sm text-slate-600">Anda akan menghapus aset <span className="font-semibold text-slate-800">{selected?.nama}</span> ({selected?.kode}). Tindakan ini tidak dapat dibatalkan.</p>
       </Modal>
+
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </AppLayout>
   );
 }
