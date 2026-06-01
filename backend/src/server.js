@@ -39,6 +39,12 @@ app.use("/api/users", userRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`SIMAMI-RS API berjalan di http://localhost:${port}`);
-});
+// Jalankan server lokal hanya jika bukan di environment Vercel
+if (process.env.VERCEL !== "1") {
+  app.listen(port, () => {
+    console.log(`SIMAMI-RS API berjalan di http://localhost:${port}`);
+  });
+}
+
+// Export sebagai Vercel Serverless Function handler
+export default app;
